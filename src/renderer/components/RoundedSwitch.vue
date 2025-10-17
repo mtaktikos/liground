@@ -3,7 +3,8 @@
   <label class="switch">
     <input
       type="checkbox"
-      :checked="engineActive"
+      :checked="active"
+      @click="onClick"
     >
     <span class="slider round" />
   </label>
@@ -14,24 +15,17 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'RoundedSwitch',
-  data () {
-    return {
-      engineActive: false
-    }
-  },
   computed: {
-    ...mapGetters(['active', 'PvE', 'turn'])
-  },
-  watch: {
-    active () {
-      if (this.active && !this.turn && this.PvE) {
-        this.$store.dispatch('goEnginePvE')
-      }
-    }
+    ...mapGetters(['active'])
   },
   methods: {
-    changeActiveState (payload) {
-      this.engineActive = payload
+    onClick () {
+      if (!this.active) {
+        this.$store.dispatch('position')
+        this.$store.dispatch('goEngine')
+      } else {
+        this.$store.dispatch('stopEngine')
+      }
     }
   }
 }
@@ -79,11 +73,11 @@ export default {
 }
 
 input:checked + .slider {
- background-color: var(--highlight-color);
+ background-color: #2196F3;
 }
 
 input:focus + .slider {
- box-shadow: 0 0 1px var(--highlight-color);
+ box-shadow: 0 0 1px #2196F3;
 }
 
 input:checked + .slider:before {

@@ -18,24 +18,8 @@
         class="player"
         style="text-align: right"
       />
-      <div
-        class="collapsible"
-        @click="toggle"
-      >
-        <em
-          v-show="showExpandIcon"
-          class="icon mdi mdi-arrow-expand-down"
-        />
-        <em
-          v-show="showMinimizeIcon"
-          class="icon mdi mdi-arrow-expand-up"
-        />
-      </div>
     </div>
-    <div
-      v-show="showSection"
-      id="metainfo"
-    >
+    <div id="metainfo">
       <p>
         Event: {{ eventName ? eventName : 'unknown' }} <span v-if="eventSite"> (@ {{ eventSite }})</span>
         <span v-if="round && /\d+/gm.test(round)"> round {{ round }} </span>
@@ -52,13 +36,6 @@ import PlayerInfo from './PlayerInfo.vue'
 export default {
   name: 'GameInfo',
   components: { PlayerInfo },
-  data () {
-    return {
-      showSection: false, // Flag to show MetaInfo
-      showExpandIcon: true, // Flag to show expand-down icon
-      showMinimizeIcon: false // Flag to show expand-up icon
-    }
-  },
   computed: {
     gameInfo () {
       return this.$store.getters.gameInfo
@@ -109,14 +86,8 @@ export default {
     round () {
       return this.gameInfo.Round
     }
-  },
-  methods: {
-    toggle () { // Flips Flags
-      this.showSection = !this.showSection
-      this.showExpandIcon = !this.showExpandIcon
-      this.showMinimizeIcon = !this.showMinimizeIcon
-    }
   }
+
 }
 </script>
 <style scoped>
@@ -127,31 +98,16 @@ export default {
 
 #players {
   display: flex;
-  border-bottom: 1px solid var(--main-border-color);
+  border-bottom: 1px solid rgb(192, 192, 192);
+}
+
+#gameinfo {
+  padding: 0.3em;
 }
 
 #metainfo {
   font-size: 10pt;
   font-weight: 200;
   text-align: left;
-}
-
-.collapsible {
-  color: var(--light-text-color);
-  background-color: var(--button-color);
-  padding: 1px;
-  border: 2px solid var(--main-border-color);
-  text-decoration: none;
-  cursor: pointer;
-  width: 20px;
-  border: none;
-  text-align: center;
-  outline: none;
-  font-size: 12px;
-  text-align: center;
-}
-
-.active, .collapsible:hover {
-  background-color: var(--hover-color);
 }
 </style>

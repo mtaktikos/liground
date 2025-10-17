@@ -17,7 +17,6 @@
       :allow-empty="false"
       :show-labels="false"
       :placeholder="selected.name"
-      @change="sendSelected"
     />
   </div>
 </template>
@@ -32,8 +31,7 @@ export default {
   components: { Multiselect },
   data () {
     return {
-      selected: null,
-      engineIndex: 1 // this will be set on created
+      selected: null // this will be set on created
     }
   },
   computed: {
@@ -44,27 +42,14 @@ export default {
   },
   watch: {
     selected () {
-      if (this.engineIndex < 2) {
-        this.$store.dispatch('changeEngine', this.selected.name)
-      }
-      this.sendSelected()
+      this.$store.dispatch('changeEngine', this.selected.name)
     },
     selectedEngine () {
-      if (this.engineIndex < 2) {
-        this.selected = this.selectedEngine
-      }
+      this.selected = this.selectedEngine
     }
   },
   created () {
     this.selected = this.selectedEngine
-  },
-  methods: {
-    setEngineIndex (payload) {
-      this.engineIndex = payload
-    },
-    sendSelected () {
-      this.$emit('sendSelected', this.selected.name)
-    }
   }
 }
 </script>
@@ -86,7 +71,7 @@ export default {
   box-sizing: content-box;
   width: 120px;
   height: 60px;
-  background-color: var(--light-text-color);;
+  background-color: #fff;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;

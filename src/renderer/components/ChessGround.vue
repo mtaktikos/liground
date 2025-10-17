@@ -2,7 +2,7 @@
   <div class="blue merida is2d">
     <div class="grid-parent">
       <div
-        v-if="variant==='crazyhouse'|| variant==='shogi' "
+        v-if="variant==='crazyhouse'|| variant==='shogi' || hasPockets "
         ref="pockets"
         class="pockets"
         :class="{ mirror : $store.getters.orientation === &quot;black&quot;, shogi: variant === &quot;shogi&quot; }"
@@ -20,27 +20,14 @@
           @selection="dropPiece"
         />
       </div>
-      <div
-        id="chessboard"
-        :class="{ koth: variant==='kingofthehill', rk: variant==='racingkings', dim8x8: dimensionNumber===0, dim9x10: dimensionNumber === 3 , dim9x9: dimensionNumber === 1 }"
-        @mousewheel.ctrl.prevent="resize($event)"
-      >
-        <div
-          class="cg-board-wrap"
-          @mousedown="closeCursorHand"
-          @mouseup="openCursorHand"
-        >
-          <div
-            class="resizer"
-            @mouseover="shade"
-            @mousedown="startDragging"
-            @mouseout="hideShade"
-          />
+      <div :class="{ koth: variant==='kingofthehill', rk: variant==='racingkings', dim8x8: dimensionNumber===0, dim9x10: dimensionNumber === 3 , dim9x9: dimensionNumber === 1 }">
+        <div class="cg-board-wrap">
           <div ref="board" />
           <div
             v-if="isPromotionModalVisible"
             id="PromotionModal"
             ref="promotion"
+
             :style="promotionPosition"
           >
             <PromotionModal
@@ -85,17 +72,8 @@ export default {
   },
   data () {
     return {
-      boardWidth: 0,
-      boardHeight: 0,
-      startingPoint: 640,
-      dragging: false,
-      enlarged: 0,
-      enlarged9x9width: 0,
-      enlarged9x9height: 0,
-      enlarged9x10width: 0,
-      enlarged9x10height: 0,
-      ranks: ['1', '2', '3', '4', '5', '6', '7', '8'],
-      files: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+      ranks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+      files: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
       selectedPiece: null,
       piecesToIdx: {
         P: 4,
@@ -126,50 +104,50 @@ export default {
         r: 6
       },
       piecesW: [
-        { count: 0, type: 'q-piece' },
-        { count: 0, type: 'r-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 'p-piece' }
+        { count: 0, type: 'queen' },
+        { count: 0, type: 'rook' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'pawn' }
       ],
       piecesB: [
-        { count: 0, type: 'p-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'r-piece' },
-        { count: 0, type: 'q-piece' }
+        { count: 0, type: 'pawn' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'rook' },
+        { count: 0, type: 'queen' }
       ],
       chessPiecesW: [
-        { count: 0, type: 'q-piece' },
-        { count: 0, type: 'r-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 'p-piece' }
+        { count: 0, type: 'queen' },
+        { count: 0, type: 'rook' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'pawn' }
       ],
       chessPiecesB: [
-        { count: 0, type: 'p-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'r-piece' },
-        { count: 0, type: 'q-piece' }
+        { count: 0, type: 'pawn' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'rook' },
+        { count: 0, type: 'queen' }
       ],
       shogiPiecesB: [
-        { count: 0, type: 'p-piece' },
-        { count: 0, type: 'l-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 's-piece' },
-        { count: 0, type: 'g-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'r-piece' }
+        { count: 0, type: 'pawn' },
+        { count: 0, type: 'lance' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'silver' },
+        { count: 0, type: 'gold' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'rook' }
       ],
       shogiPiecesW: [
-        { count: 0, type: 'r-piece' },
-        { count: 0, type: 'b-piece' },
-        { count: 0, type: 'g-piece' },
-        { count: 0, type: 's-piece' },
-        { count: 0, type: 'n-piece' },
-        { count: 0, type: 'l-piece' },
-        { count: 0, type: 'p-piece' }
+        { count: 0, type: 'rook' },
+        { count: 0, type: 'bishop' },
+        { count: 0, type: 'gold' },
+        { count: 0, type: 'silver' },
+        { count: 0, type: 'knight' },
+        { count: 0, type: 'lance' },
+        { count: 0, type: 'pawn' }
       ],
       board: null,
       shapes: [],
@@ -178,8 +156,7 @@ export default {
       isPromotionModalVisible: false,
       promotionMove: undefined,
       pieceStyleEl: null,
-      boardStyleEl: null,
-      start: true
+      boardStyleEl: null
     }
   },
   computed: {
@@ -213,40 +190,9 @@ export default {
         return undefined
       }
     },
-    ...mapGetters(['initialized', 'variant', 'multipv', 'hoveredpv', 'redraw', 'pieceStyle', 'boardStyle', 'fen', 'lastFen', 'orientation', 'moves', 'isPast', 'dimensionNumber', 'analysisMode', 'active', 'PvE', 'enginetime', 'resized', 'resized9x9width', 'resized9x9height', 'resized9x10width', 'resized9x10height', 'dimNumber'])
+    ...mapGetters(['initialized', 'variant', 'hasPockets', 'hasGating', 'multipv', 'hoveredpv', 'redraw', 'pieceStyle', 'boardStyle', 'fen', 'lastFen', 'orientation', 'moves', 'isPast', 'dimensionNumber', 'analysisMode'])
   },
   watch: {
-    dimensionNumber () {
-      const boardSize = document.querySelector('.cg-wrap')
-      switch (this.dimensionNumber) {
-        case 0:
-          boardSize.style.width = 600 + this.enlarged + 'px'
-          boardSize.style.height = 600 + this.enlarged + 'px'
-          this.startingPoint = this.enlarged
-          document.body.dispatchEvent(new Event('chessground.resize'))
-          break
-        case 1:
-          boardSize.style.width = 520 + this.enlarged9x9width + 'px'
-          boardSize.style.height = 600 + this.enlarged9x9height + 'px'
-          this.startingPoint = this.enlarged9x9height
-          document.body.dispatchEvent(new Event('chessground.resize'))
-          break
-        case 3:
-          boardSize.style.width = 540 + this.enlarged9x10width + 'px'
-          boardSize.style.height = 600 + this.enlarged9x10height + 'px'
-          this.startingPoint = this.enlarged9x10height
-          document.body.dispatchEvent(new Event('chessground.resize'))
-          break
-      }
-      this.boardWidth = boardSize.style.width
-      this.boardHeight = boardSize.style.height
-      this.$store.dispatch('setResized', this.enlarged)
-      this.$store.dispatch('setResized9x9width', this.enlarged9x9width)
-      this.$store.dispatch('setResized9x10width', this.enlarged9x10width)
-      this.$store.dispatch('setResized9x9height', this.enlarged9x9height)
-      this.$store.dispatch('setResized9x10height', this.enlarged9x10height)
-      this.$store.dispatch('setDimNumber', this.dimensionNumber)
-    },
     initialized () {
       this.updateBoard()
     },
@@ -268,42 +214,43 @@ export default {
       const multipv = this.multipv
       const shapes = []
       const pieceShapes = []
+
       for (const [i, pvline] of multipv.entries()) {
         if (pvline && 'ucimove' in pvline && pvline.ucimove.length > 0) {
           const lineWidth = 2 + ((multipv.length - i) / multipv.length) * 8
-          const move = pvline.ucimove
+          let move = pvline.ucimove
           let orig = move.substring(0, 2)
           let dest = move.substring(2, 4)
           let drawShape
           if (this.dimensionNumber === 3) {
-            const extract = this.extractMoves(move)
-            orig = extract[0].replace('10', ':')
-            dest = extract[1].replace('10', ':')
+            move = this.lowerNumbers(move)
+            orig = move.substring(0, 2)
+            dest = move.substring(2, 4)
           }
+
           if (move.includes('@')) {
             const pieceType = move[0].toLowerCase()
             const pieceConv = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }
             pieceShapes.unshift({
               orig: dest,
               dest: dest,
-              brush: 'paleBlue',
+              brush: 'blue',
               modifiers: { lineWidth },
               piece: {
                 role: pieceConv[pieceType],
                 color: this.turn
               }
             })
-            drawShape = { orig: dest, brush: 'paleBlue', modifiers: { lineWidth } }
+            drawShape = { orig: dest, brush: 'blue', modifiers: { lineWidth } }
           } else {
-            drawShape = { orig, dest, brush: 'paleBlue', modifiers: { lineWidth } }
+            drawShape = { orig, dest, brush: 'blue', modifiers: { lineWidth } }
           }
+
           // adjust color if pv line is hovered
           if (i === this.hoveredpv) {
-            drawShape.brush = 'blue'
-          }
-          if (i === 0) {
             drawShape.brush = 'yellow'
           }
+
           // put item in front of list, so that the best move is drawn last
           shapes.unshift(drawShape)
         }
@@ -315,10 +262,7 @@ export default {
     hoveredpv () {
       const index = this.shapes.length - this.hoveredpv - 1
       for (const [i, shape] of this.shapes.entries()) {
-        shape.brush = i === index ? 'blue' : 'paleBlue'
-        if (i === this.shapes.length - 1) {
-          this.shapes[this.shapes.length - 1].brush = 'yellow'
-        }
+        shape.brush = i === index ? 'yellow' : 'blue'
       }
       this.drawShapes()
     },
@@ -326,8 +270,7 @@ export default {
       if (this.variant === 'shogi') {
         this.piecesW = this.shogiPiecesW
         this.piecesB = this.shogiPiecesB
-      }
-      if (this.variant === 'crazyhouse') {
+      } else if ((this.variant === 'crazyhouse') || this.hasPockets) {
         this.piecesW = this.chessPiecesW
         this.piecesB = this.chessPiecesB
       }
@@ -359,34 +302,19 @@ export default {
 
         document.body.dispatchEvent(new Event('chessground.resize'))
       }
-      if (this.variant === 'crazyhouse' || this.variant === 'shogi') {
+      if (this.variant === 'crazyhouse' || this.variant === 'shogi' || this.hasPockets) {
         document.body.dispatchEvent(new Event('chessground.resize'))
       }
       this.board.set({
         variant: this.variant,
         lastMove: false
       })
+
       this.updateBoard()
       this.isPromotionModalVisible = false
     }
   },
   mounted () {
-    if (!isNaN(Number(localStorage.resized))) {
-      this.enlarged = Number(localStorage.resized)
-    }
-    if (!isNaN(Number(localStorage.resized9x9width))) {
-      this.enlarged9x9width = Number(localStorage.resized9x9width)
-      this.enlarged9x9height = Number(localStorage.resized9x9height)
-    }
-    if (!isNaN(Number(localStorage.resized9x10width))) {
-      this.enlarged9x10width = Number(localStorage.resized9x10width)
-      this.enlarged9x10height = Number(localStorage.resized9x10height)
-    }
-    window.addEventListener('mouseup', this.stopDragging)
-    window.addEventListener('mousemove', this.doResize)
-    window.addEventListener('wheel', this.reRender)
-    window.addEventListener('mouseup', this.reRender)
-
     this.board = Chessground(this.$refs.board, {
       coordinates: false,
       fen: this.fen,
@@ -424,188 +352,15 @@ export default {
     this.pieceStyleEl.rel = 'stylesheet'
     document.head.appendChild(this.boardStyleEl)
     document.head.appendChild(this.pieceStyleEl)
+
     // set initial styles
     this.updateBoardCSS(this.boardStyle)
     this.updatePieceCSS(this.pieceStyle)
+
     // force initial resize
-    document.body.dispatchEvent(new Event('chessground.resize'))
-    const boardSize = document.querySelector('.cg-wrap')
-    if (Number(localStorage.dimNumber) === 0) {
-      boardSize.style.width = 600 + this.enlarged + 'px'
-      boardSize.style.height = 600 + this.enlarged + 'px'
-      this.startingPoint = this.enlarged
-    }
     document.body.dispatchEvent(new Event('chessground.resize'))
   },
   methods: {
-    closeCursorHand () {
-      const board = document.querySelector('.cg-wrap')
-      board.style.cursor = 'grabbing'
-    },
-    openCursorHand () {
-      const board = document.querySelector('.cg-wrap')
-      board.style.cursor = 'grab'
-    },
-    reRender (event) {
-      document.body.dispatchEvent(new Event('chessground.resize'))
-    },
-    hideShade () {
-      if (this.dragging === false) {
-        document.querySelector('.resizer').style.opacity = 0.0
-      }
-    },
-    shade () {
-      document.querySelector('.resizer').style.opacity = 0.8
-    },
-    stopDragging () {
-      document.querySelector('.resizer').style.opacity = 0.0
-      this.dragging = false
-    },
-    startDragging () {
-      this.dragging = true
-      document.querySelector('.resizer').style.opacity = 0.8
-    },
-    doResize (event) {
-      const boardSize = document.querySelector('.cg-wrap')
-      if (this.dragging === false) {
-        return
-      }
-      if (event.clientY - this.startingPoint > 40) {
-        switch (this.dimensionNumber) {
-          case 0:
-            if (this.enlarged < 200) {
-              this.enlarged += 40
-            }
-            break
-          case 1:
-            if (this.enlarged9x9width < 200) {
-              this.enlarged9x9width += 35
-              this.enlarged9x9height += (35 * 1.153846153846154) // to get the aspect ration of 1.153 width to height
-            }
-            break
-          case 3:
-            if (this.enlarged9x10width < 200) {
-              this.enlarged9x10width += 35
-              this.enlarged9x10height += (35 * 1.111111111111111)
-            }
-            break
-        }
-        this.startingPoint = event.clientY
-      } else if (event.clientY - this.startingPoint < -40) {
-        switch (this.dimensionNumber) {
-          case 0:
-            if (this.enlarged > -200) {
-              this.enlarged -= 40
-            }
-            break
-          case 1:
-            if (this.enlarged9x9width > -200) {
-              this.enlarged9x9width -= 35
-              this.enlarged9x9height -= (35 * 1.153846153846154)
-            }
-            break
-          case 3:
-            if (this.enlarged9x10width > -200) {
-              this.enlarged9x10width -= 35
-              this.enlarged9x10height -= (35 * 1.111111111111111)
-            }
-            break
-        }
-        this.startingPoint = event.clientY
-      }
-      if (this.dimensionNumber === 0 && (this.enlarged <= 200 && this.enlarged >= -200)) {
-        boardSize.style.width = 600 + this.enlarged + 'px'
-        boardSize.style.height = 600 + this.enlarged + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      } else if (this.dimensionNumber === 1 && (this.enlarged9x9width <= 200 && this.enlarged9x9width >= -200)) {
-        boardSize.style.width = 520 + this.enlarged9x9width + 'px'
-        boardSize.style.height = 600 + this.enlarged9x9height + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      } else if (this.dimensionNumber === 3 && (this.enlarged9x10width <= 200 && this.enlarged9x10width >= -200)) {
-        boardSize.style.width = 540 + this.enlarged9x10width + 'px'
-        boardSize.style.height = 600 + this.enlarged9x10height + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      }
-
-      this.boardWidth = boardSize.style.width
-      this.boardHeight = boardSize.style.height
-      this.$store.dispatch('setResized', this.enlarged)
-      this.$store.dispatch('setResized9x9height', this.enlarged9x9height)
-      this.$store.dispatch('setResized9x10height', this.enlarged9x10height)
-      this.$store.dispatch('setResized9x9width', this.enlarged9x9width)
-      this.$store.dispatch('setResized9x10width', this.enlarged9x10width)
-    },
-    resize (event) {
-      const boardSize = document.querySelector('.cg-wrap')
-      if (event.deltaY > 0) {
-        switch (this.dimensionNumber) {
-          case 0:
-            if (this.enlarged < 200) {
-              this.enlarged += 40
-              this.startingPoint += 40
-            }
-            break
-          case 1:
-            if (this.enlarged9x9width < 200) {
-              this.enlarged9x9width += 35
-              this.enlarged9x9height += (35 * 1.153846153846154)
-              this.startingPoint += (35 * 1.153846153846154)
-            }
-            break
-          case 3:
-            if (this.enlarged9x10width < 200) {
-              this.enlarged9x10width += 35
-              this.enlarged9x10height += (35 * 1.111111111111111) // to get the aspect ration of 1.11111 width to height
-              this.startingPoint += (35 * 1.111111111111111)
-            }
-            break
-        }
-      } else if (event.deltaY < 0) {
-        switch (this.dimensionNumber) {
-          case 0:
-            if (this.enlarged > -200) {
-              this.enlarged -= 40
-              this.startingPoint -= 40
-            }
-            break
-          case 1:
-            if (this.enlarged9x9width > -200) {
-              this.enlarged9x9width -= 35
-              this.enlarged9x9height -= (35 * 1.153846153846154)
-              this.startingPoint -= (35 * 1.153846153846154)
-            }
-            break
-          case 3:
-            if (this.enlarged9x10width > -200) {
-              this.enlarged9x10width -= 35
-              this.enlarged9x10height -= (35 * 1.111111111111111)
-              this.startingPoint -= (35 * 1.111111111111111)
-            }
-            break
-        }
-      }
-
-      if (this.dimensionNumber === 0 && (this.enlarged <= 200 && this.enlarged >= -200)) {
-        boardSize.style.width = 600 + this.enlarged + 'px'
-        boardSize.style.height = 600 + this.enlarged + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      } else if (this.dimensionNumber === 1 && (this.enlarged9x9width <= 200 && this.enlarged9x9width >= -200)) {
-        boardSize.style.width = 520 + this.enlarged9x9width + 'px'
-        boardSize.style.height = 600 + this.enlarged9x9height + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      } else if (this.dimensionNumber === 3 && (this.enlarged9x10width <= 200 && this.enlarged9x10width >= -200)) {
-        boardSize.style.width = 540 + this.enlarged9x10width + 'px'
-        boardSize.style.height = 600 + this.enlarged9x10height + 'px'
-        document.body.dispatchEvent(new Event('chessground.resize'))
-      }
-      this.boardWidth = boardSize.style.width
-      this.boardHeight = boardSize.style.height
-      this.$store.dispatch('setResized', this.enlarged)
-      this.$store.dispatch('setResized9x9height', this.enlarged9x9height)
-      this.$store.dispatch('setResized9x10height', this.enlarged9x10height)
-      this.$store.dispatch('setResized9x9width', this.enlarged9x9width)
-      this.$store.dispatch('setResized9x10width', this.enlarged9x10width)
-    },
     showPromotionModal () {
       this.isPromotionModalVisible = true
     },
@@ -621,50 +376,32 @@ export default {
     updatePieceCSS (pieceStyle) {
       const node = this.pieceStyleEl
       if (this.$store.getters.isInternational) {
-        node.href = '../../../../static/piece-css/international/' + pieceStyle + '.css'
+        node.href = 'static/piece-css/international/' + pieceStyle + '.css'
       } else if (this.$store.getters.isSEA) {
-        node.href = '../../../../static/piece-css/sea/' + pieceStyle + '.css'
+        node.href = 'static/piece-css/sea/' + pieceStyle + '.css'
       } else if (this.$store.getters.isXiangqi || this.$store.getters.isJanggi) {
-        node.href = '../../../../static/piece-css/xiangqi/' + pieceStyle + '.css'
+        node.href = 'static/piece-css/xiangqi/' + pieceStyle + '.css'
       } else if (this.$store.getters.isShogi) {
-        node.href = '../../../../static/piece-css/shogi/' + pieceStyle + '.css'
+        node.href = 'static/piece-css/shogi/' + pieceStyle + '.css'
       }
     },
     updateBoardCSS (boardStyle) {
       const node = this.boardStyleEl
       if (this.$store.getters.isInternational) {
-        node.href = '../../../../static/board-css/international/' + boardStyle + '.css'
+        node.href = 'static/board-css/international/' + boardStyle + '.css'
       } else if (this.$store.getters.isXiangqi || this.$store.getters.isJanggi) {
-        node.href = '../../../../static/board-css/xiangqi/' + this.variant + '/' + boardStyle + '.css'
+        node.href = 'static/board-css/xiangqi/' + this.variant + '/' + boardStyle + '.css'
       } else if (this.$store.getters.isSEA) {
-        node.href = '../../../../static/board-css/sea/' + boardStyle + '.css'
+        node.href = 'static/board-css/sea/' + boardStyle + '.css'
       } else if (this.$store.getters.isShogi) {
-        node.href = '../../../../static/board-css/shogi/' + boardStyle + '.css'
+        node.href = 'static/board-css/shogi/' + boardStyle + '.css'
       }
-      document.body.dispatchEvent(new Event('chessground.resize'))
     },
     dropPiece (event, pieceType, color) {
       this.board.dragNewPiece({ role: pieceType, color: color, promoted: false }, event)
       this.selectedPiece = pieceType
-    },
-    extractMoves (move) {
-      const letters = move.split(/(\d+)/)
-      let first = ''
-      let second = ''
-      let firstcomplete = false
-      for (const i in letters) {
-        if (isNaN(parseInt(letters[i])) && first.length !== 0) {
-          firstcomplete = true
-        }
-        if (firstcomplete === false) {
-          first += letters[i]
-        }
-        if (firstcomplete) {
-          second += letters[i]
-        }
-      }
-      const ret = [first, second]
-      return ret
+      console.log(`dropPiece: ${event} ${pieceType} ${color}`)
+      console.log(`dropPiece: ${this.board.getFen()}`)
     },
     increaseNumbers (move) {
       const letters = move.split(/(\d+)/)
@@ -688,14 +425,12 @@ export default {
       for (let i = 0; i < this.legalMoves.length; i++) {
         // don't include dropping moves
         if (this.legalMoves[i].length !== 3) {
-          const Move = this.legalMoves[i]
+          let Move = this.legalMoves[i]
+          if (this.dimensionNumber === 3) {
+            Move = this.lowerNumbers(Move)
+          }
           fromSq = Move.substring(0, 2)
           toSq = Move.substring(2, 4)
-          if (this.dimensionNumber === 3) {
-            const extract = this.extractMoves(Move)
-            fromSq = extract[0].replace('10', ':')
-            toSq = extract[1].replace('10', ':')
-          }
         }
         if (fromSq in dests) {
           dests[fromSq].push(toSq)
@@ -722,18 +457,18 @@ export default {
       if (this.$store.getters.isInternational) {
         if (this.variant === 'antichess') {
           this.promotions = [
-            { type: 'k-piece' },
-            { type: 'q-piece' },
-            { type: 'r-piece' },
-            { type: 'b-piece' },
-            { type: 'n-piece' }
+            { type: 'king' },
+            { type: 'queen' },
+            { type: 'rook' },
+            { type: 'bishop' },
+            { type: 'knight' }
           ]
         } else {
           this.promotions = [
-            { type: 'q-piece' },
-            { type: 'r-piece' },
-            { type: 'b-piece' },
-            { type: 'n-piece' }
+            { type: 'queen' },
+            { type: 'rook' },
+            { type: 'bishop' },
+            { type: 'knight' }
           ]
         }
       }
@@ -750,35 +485,35 @@ export default {
             }
           }
         }
-        if (type === 'p-piece') {
+        if (type === 'pawn') {
           this.promotions = [
-            { type: 'p-piece' },
-            { type: 'pp-piece' }
+            { type: 'pawn' },
+            { type: 'ppawn' }
           ]
-        } else if (type === 'l-piece') {
+        } else if (type === 'lance') {
           this.promotions = [
-            { type: 'l-piece' },
-            { type: 'pl-piece' }
+            { type: 'lance' },
+            { type: 'plance' }
           ]
-        } else if (type === 'n-piece') {
+        } else if (type === 'knight') {
           this.promotions = [
-            { type: 'n-piece' },
-            { type: 'pn-piece' }
+            { type: 'knight' },
+            { type: 'pknight' }
           ]
-        } else if (type === 's-piece') {
+        } else if (type === 'silver') {
           this.promotions = [
-            { type: 's-piece' },
-            { type: 'ps-piece' }
+            { type: 'silver' },
+            { type: 'psilver' }
           ]
-        } else if (type === 'b-piece') {
+        } else if (type === 'bishop') {
           this.promotions = [
-            { type: 'b-piece' },
-            { type: 'pb-piece' }
+            { type: 'bishop' },
+            { type: 'pbishop' }
           ]
-        } else if (type === 'r-piece') {
+        } else if (type === 'rook') {
           this.promotions = [
-            { type: 'r-piece' },
-            { type: 'pr-piece' }
+            { type: 'rook' },
+            { type: 'prook' }
           ]
         }
         if (num === 1 && promo) {
@@ -793,7 +528,7 @@ export default {
     },
     afterDrag () {
       return (role, key) => {
-        const pieces = { 'p-piece': 'P', 'n-piece': 'N', 'b-piece': 'B', 'r-piece': 'R', 'q-piece': 'Q', 's-piece': 'S', 'g-piece': 'G', 'l-piece': 'L' }
+        const pieces = { pawn: 'P', knight: 'N', bishop: 'B', rook: 'R', queen: 'Q', silver: 'S', gold: 'G', lance: 'L' }
         const move = pieces[role] + '@' + key
         const prevMov = this.currentMove
         if (this.$store.getters.legalMoves.includes(move)) {
@@ -808,13 +543,12 @@ export default {
       return (orig, dest, metadata) => {
         let uciMove = orig + dest
         if (this.dimensionNumber === 3) {
-          uciMove = uciMove.replaceAll(':', '10') // Convert the ':' back to '10'
+          uciMove = this.increaseNumbers(uciMove)
         }
         if (this.isPromotion(uciMove)) {
           if (this.variant === 'makruk') {
             const move = uciMove + 'm'
-            const prevMov = this.currentMove
-            this.$store.dispatch('push', { move: move, prev: prevMov })
+            this.$store.dispatch('push', move)
           } else {
             this.setPromotionOptions(uciMove)
             this.promotionMove = uciMove
@@ -826,6 +560,7 @@ export default {
           this.$store.dispatch('push', { move: uciMove, prev: prevMov })
           this.updateHand()
           this.afterMove()
+          console.log(this.turn)
         }
       }
     },
@@ -871,7 +606,7 @@ export default {
       const events = {}
       events.fen = this.fen
       events.history = [this.lastMoveSan]
-      // this.$emit('onMove', events)
+      this.$emit('onMove', events)
       this.$store.dispatch('lastFen', this.fen)
     },
     updateBoard () {
@@ -885,14 +620,12 @@ export default {
       if (this.currentMove === undefined || this.moves.length === 0) {
         this.board.state.lastMove = undefined
       } else {
-        const string = String(this.currentMove.uci)
-        let first = string.substring(0, 2)
-        let second = string.substring(2, 4)
+        let string = String(this.currentMove.uci)
         if (this.dimensionNumber === 3) {
-          const extract = this.extractMoves(string)
-          first = extract[0].replace('10', ':')
-          second = extract[1].replace('10', ':') // the 10th rank is represented as ":"
+          string = this.lowerNumbers(string)
         }
+        const first = string.substring(0, 2)
+        const second = string.substring(2, 4)
         if (string.includes('@')) { // no longer displays a green box in the corner
           this.board.state.lastMove = [second]
         } else {
@@ -918,7 +651,8 @@ export default {
             },
         orientation: this.orientation
       })
-      if (this.variant === 'crazyhouse' || this.variant === 'shogi') {
+
+      if (this.variant === 'crazyhouse' || this.variant === 'shogi' || this.hasPockets) {
         this.updateHand()
       }
     },
@@ -942,20 +676,6 @@ export default {
 @import '../assets/dim8x8.css';
 @import '../assets/dim9x10.css';
 
-.resizer{
-  padding-left: 15px;
-  padding-top: 15px;
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
-  background-color: red;
-  z-index: 2;
-  bottom: -1px;
-  right: -1px;
-  cursor: se-resize;
-  opacity: 0.0;
-  }
 #PromotionModal {
   position: absolute;
   z-index: 4;
@@ -1000,7 +720,7 @@ coords {
   text-shadow: var(--cg-coord-shadow);
   font-size: calc(8px + 4 * ((100vw - 320px) / 880));
   display: flex;
-  color: var(--light-text-color);
+  color: #fff;
   text-shadow: 0 1px 2px #000;
   font-weight: bold;
 }

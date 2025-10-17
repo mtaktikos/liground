@@ -53,6 +53,6 @@ body { font-family: Avenir, Helvetica, Arial, sans-serif; }
 
 #menubar {
   text-align: center;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
 }
 </style>

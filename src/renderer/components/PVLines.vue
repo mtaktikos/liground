@@ -29,55 +29,42 @@
           >Play entire line</a>
         </li>
       </VueContext>
-      <template
-        v-for="(line, id) in lines"
-      >
-        <div
-          v-if="line"
-          :key="id"
-          class="item clickable"
-          @mouseenter="onMouseEnter(id)"
-          @mouseleave="onMouseLeave(id)"
-          @click="onClick(line)"
+      <div class="list">
+        <template
+          v-for="(line, id) in lines"
         >
-          <span class="left">{{ line.cpDisplay }}</span>
-          <span
-            class="right"
-            @contextmenu.prevent="(currentMove && currentMove.main) || (!currentMove && mainFirstMove) ? $refs.menu1.open($event, { line: line }) : $refs.menu2.open($event, { line: line })"
+          <div
+            v-if="line"
+            :key="id"
+            class="item clickable"
+            @mouseenter="onMouseEnter(id)"
+            @mouseleave="onMouseLeave(id)"
+            @click="onClick(line)"
           >
-            {{ line.pv }}
-          </span>
-        </div>
-        <div
-          v-else
-          :key="id"
-          class="item placeholder"
-        >
-          ...
-        </div>
-      </template>
+            <span class="left">{{ line.cpDisplay }}</span>
+            <span
+              class="right"
+              @contextmenu.prevent="(currentMove && currentMove.main) || (!currentMove && mainFirstMove) ? $refs.menu1.open($event, { line: line }) : $refs.menu2.open($event, { line: line })"
+            >
+              {{ line.pv }}
+            </span>
+          </div>
+          <div
+            v-else
+            :key="id"
+            class="item placeholder"
+          >
+            ...
+          </div>
+        </template>
+      </div>
     </div>
-    <footer class="footer">
-      <div
-        v-if="engineDetails.length > 0"
-        class="details"
-      >
-        {{ engineDetails }}
-      </div>
-      <div
-        class="collapsible"
-        @click="toggle"
-      >
-        <em
-          v-show="showExpandIcon"
-          class="icon mdi mdi-arrow-expand-down"
-        />
-        <em
-          v-show="showMinimizeIcon"
-          class="icon mdi mdi-arrow-expand-up"
-        />
-      </div>
-    </footer>
+    <div
+      v-if="engineDetails.length > 0"
+      class="details"
+    >
+      {{ engineDetails }}
+    </div>
   </div>
 </template>
 
@@ -91,37 +78,13 @@ export default {
   },
   data () {
     return {
-      lines: [],
-      engineInfo: {
-        name: '',
-        author: '',
-        options: []
-      },
-      multipvMulti: [
-        {
-          cp: 0,
-          pv: '',
-          ucimove: ''
-        }
-      ],
-      currentEngine: 1,
-      pvcount: 0,
-      originalMultiPV: 1,
-      showOnlyOnePvLine: false, // Flag to show only one PvLine
-      showExpandIcon: false, // Flag to show expand-down icon
-      showMinimizeIcon: true // Flag to show expand-up icon
+      lines: []
     }
   },
   computed: {
     engineDetails () {
-      if (this.currentEngine === 1) {
-        const { engineName, engineAuthor } = this.$store.getters
-        return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
-      } else {
-        const engineName = this.engineInfo.name
-        const engineAuthor = this.engineInfo.author
-        return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
-      }
+      const { engineName, engineAuthor } = this.$store.getters
+      return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
     },
     currentMove () {
       for (let num = 0; num < this.moves.length; num++) {
@@ -131,59 +94,17 @@ export default {
       }
       return null
     },
-    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'PvE', 'active', 'turn', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth'])
+    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove'])
   },
   watch: {
-    pvcount () {
-      let i
-      this.lines = []
-      for (i = 0; i < this.pvcount; i++) {
-        this.lines.push(0)
-      }
-    },
-    multipvMulti () {
-      this.updateMultiLines()
-    },
     multipv () {
       this.updateLines()
     },
     engineSettings () {
-      this.originalMultiPV = this.engineSettings.MultiPV
       this.updateLines()
-    },
-    nodes () {
-      if (this.active && this.PvE && !this.turn) {
-        if (this.PvEValue === 'nodes') {
-          if (this.nodes >= (this.PvEInput)) {
-            this.onClick(this.lines[0])
-          }
-        }
-      }
-    },
-    depth () {
-      if (this.active && this.PvE && !this.turn) {
-        if (this.PvEValue === 'depth') {
-          if (this.depth >= (this.PvEInput)) {
-            this.onClick(this.lines[0])
-          }
-        }
-      }
     }
   },
   methods: {
-    fillpvCount (payload) {
-      this.pvcount = payload
-      this.originalMultiPV = payload
-    },
-    currentEngineIndex (payload) {
-      this.currentEngine = payload
-    },
-    fillPV (payload) {
-      this.multipvMulti = payload
-    },
-    fillInfo (payload) {
-      this.engineInfo = payload
-    },
     asMain (target, data) {
       const mainLine = data.line.pvUCI.split(' ')
       const prevMov = this.currentMove
@@ -207,34 +128,9 @@ export default {
       this.$store.dispatch('push', { move: line.ucimove, prev: prevMov })
     },
     updateLines () {
-      if (this.currentEngine === 1) {
-        const count = this.engineSettings.MultiPV
-        const lines = this.multipv.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
-        this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
-        if (this.showOnlyOnePvLine) {
-          this.lines = this.lines.slice(1, 2)
-        }
-      }
-    },
-    updateMultiLines () {
-      if (this.currentEngine !== 1) {
-        const count = this.pvcount
-        const lines = this.multipvMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
-        this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
-        if (this.showOnlyOnePvLine) {
-          this.lines = this.lines.slice(1, 2)
-        }
-      }
-    },
-    toggle () {
-      this.showExpandIcon = !this.showExpandIcon
-      this.showMinimizeIcon = !this.showMinimizeIcon
-      this.showOnlyOnePvLine = !this.showOnlyOnePvLine
-      if (this.currentEngine === 1) {
-        this.updateLines()
-      } else {
-        this.updateMultiLines()
-      }
+      const count = this.engineSettings.MultiPV
+      const lines = this.multipv.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
+      this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
     }
   }
 }
@@ -243,7 +139,6 @@ export default {
 <style scoped>
 .pv-lines {
   background-color: var(--second-bg-color);
-  border: 1px solid var(--main-border-color);
   font-weight: 100;
   white-space: nowrap;
 }
@@ -271,7 +166,7 @@ export default {
   cursor: pointer;
 }
 .item.clickable:hover {
-  background-color: var(--dark-highlight-color);
+  background-color: #2196F3;
 }
 .item > .left {
   margin-right: 5px;
@@ -288,34 +183,9 @@ export default {
   justify-content: center;
 }
 
-.footer {
-  display: flex;
-}
-
 .details {
-  border-top: 1px solid var(--main-border-color);
   font-size: 8pt;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   font-style: oblique;
-  flex-grow: 1;
-}
-
-.collapsible {
-  color: var(--light-text-color);
-  background-color: var(--button-color);
-  padding: 1px;
-  border: 2px solid var(--main-border-color);
-  text-decoration: none;
-  cursor: pointer;
-  width: 20px;
-  border: none;
-  text-align: right;
-  outline: none;
-  font-size: 12px;
-  text-align: center;
-}
-
-.collapsible:hover {
-  background-color: var(--hover-color);
 }
 </style>

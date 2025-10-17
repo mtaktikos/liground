@@ -2,17 +2,7 @@
   <div class="ceval grid-parent">
     LiGround
     <Multiselect
-      v-if="QuickTourIndex !== 7"
       class="multiselect"
-      :value="displayVariant"
-      :options="options"
-      :allow-empty="false"
-      :show-labels="false"
-      @input="updateVariant"
-    />
-    <Multiselect
-      v-else
-      class="multiselect-qt"
       :value="displayVariant"
       :options="options"
       :allow-empty="false"
@@ -27,38 +17,19 @@
         @click="resetBoard"
       >
     </div>
-    <Mode960 v-if="QuickTourIndex !== 8" />
-    <Mode960
-      v-else
-      id="Mode960-qt"
-    />
-    <div
-      v-if="QuickTourIndex !== 9"
-      id="PvESwitch"
-    >
-      PvE
-      <PvESwitch />
-    </div>
-    <div
-      v-else
-      id="PvESwitch-qt"
-    >
-      PvE
-      <PvESwitch />
-    </div>
+    <Mode960 />
   </div>
 </template>
 
 <script>
 import Multiselect from 'vue-multiselect'
 import Mode960 from './Mode960'
-import PvESwitch from './PvESwitch.vue'
-import { mapGetters, mapState } from 'vuex'
+import { mapState } from 'vuex'
 
 export default {
   name: 'AnalysisHead',
   components: {
-    Multiselect, Mode960, PvESwitch
+    Multiselect, Mode960
   },
   data () {
     return {
@@ -79,19 +50,16 @@ export default {
     },
     displayVariant () { // retuns the "nice" name of the current variant
       return this.variantOptions.revGet(this.variant)
-    },
-    ...mapGetters(['QuickTourIndex'])
+    }
   },
   methods: {
     updateVariant (payload) {
-      this.$emit('updateVariant')
       this.$store.dispatch('variant', this.variantOptions.get(payload))
     },
     resetBoard () {
       if (confirm('Do you really want to reset the board?')) {
         document.dispatchEvent(new Event('resetPlot'))
         this.$store.dispatch('resetBoard', { is960: false }) // used to exit 960 Mode
-        this.$emit('resetMultiEngine')
       }
     }
   }
@@ -110,10 +78,10 @@ export default {
 }
 .resetButton {
   display: grid;
-  padding-left: 4px;
+  padding-left: 5px;
 }
 .reset:hover {
-  background-color: var(--hover-color);
+  background-color: #22303d;
   cursor:pointer;
 }
 .ceval {
@@ -121,32 +89,18 @@ export default {
   font-size: 15pt;
   height: 40px;
 }
-#Mode960-qt{
-  border: 5px solid var(--quicktour-highlight);
-}
-.multiselect-qt{
-  border: 5px solid var(--quicktour-highlight);
-}
-#PvESwitch-qt{
-  margin-left: 8px;
-  display: flex;
-  border: 5px solid var(--quicktour-highlight);
-}
-#PvESwitch{
-  margin-top: 8px;
-  display: flex;
-}
+
 .grid-parent {
   display: grid;
-  grid-template-columns: auto auto auto auto auto auto;
+  grid-template-columns: auto auto auto auto auto;
   align: center;
   text-align: bottom;
   align-items: center;
   /* vertical-align: middle; */
 }
 .logo {
-  font-size: 15pt;
-  font-family: sans-serif;
+    font-size: 15pt;
+    font-family: sans-serif;
 }
 
 </style>

@@ -9,7 +9,7 @@ function arrayify (data) {
  * Class to handle communication with engine.
  * Emits `debug`, `error`, `io`, `info` events.
  */
-export class Engine extends EventEmitter {
+class Engine extends EventEmitter {
   constructor (...args) {
     super(...args)
 
@@ -60,7 +60,7 @@ export class Engine extends EventEmitter {
 
       // run main engine
       this.mainWorker.postMessage({
-        payload: { binary, cwd, listeners: ['io', 'info', 'bestmove'] },
+        payload: { binary, cwd, listeners: ['io', 'info'] },
         type: 'run'
       })
 
@@ -86,6 +86,38 @@ export class Engine extends EventEmitter {
           }
         }
       }
+      this.evalWorker.addEventListener('message', listener)
+    })
+  }
+
+
+  check_variants (binary, cwd) {
+    return new Promise(resolve => {
+      this.once('active', info => resolve(info))
+
+            // run main engine
+
+      // initialize eval engine options
+      const listener = ({ data }) => {
+        if (data.type === 'active' || (data.type === 'cache' && data.events.find(event => event.type === 'active'))) {
+          this.evalWorker.removeEventListener('message', listener)
+          const options = {
+            UCI_AnalyseMode: 'true',
+            'Analysis Contempt': 'Off'
+          }
+          for (const [name, value] of Object.entries(options)) {
+            this.evalWorker.postMessage({
+              payload: `setoption name ${name} value ${value}`,
+              type: 'cmd'
+            })
+          }
+        }
+      }
+      this.mainWorker.postMessage({
+        payload: { binary, cwd, listeners: ['io', 'info'], variants },
+        type: 'check_variants'
+      })
+      
       this.evalWorker.addEventListener('message', listener)
     })
   }
@@ -132,4 +164,5 @@ export class Engine extends EventEmitter {
     })
   }
 }
-export const engine = new Engine()
+
+export default new Engine()

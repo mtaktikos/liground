@@ -32,7 +32,7 @@ export default {
     return {
       curVar: '',
       fen: '',
-      variants: ['chess', 'crazyhouse', 'kingofthehill', '3check', 'antichess', 'atomic', 'horde']
+      variants: ['chess', 'crazyhouse', 'kingofthehill', '3check', 'antichess', 'atomic']
     }
   },
   computed: {
@@ -60,11 +60,7 @@ export default {
       if (this.variants.includes(this.variant)) {
         const rand = Math.floor(960 * Math.random())
         this.curVar = rand
-        if (this.variant === 'horde') {
-          this.fen = this.c960_arrangement(rand).toLowerCase() + '/pppppppp/8/1PP2PP1/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP w kq - 0 1'
-        } else {
-          this.fen = this.c960_fen(rand)
-        }
+        this.fen = this.c960_fen(rand)
         this.$store.dispatch('curVar960Fen', this.fen)
         this.$store.dispatch('set960', { fen: this.fen, is960: true })
       } else {
@@ -74,11 +70,7 @@ export default {
     updateBoard (event) {
       if (this.variants.includes(this.variant)) {
         this.curVar = event.target.value
-        if (this.variant === 'horde') {
-          this.fen = this.c960_arrangement(this.curVar).toLowerCase() + '/pppppppp/8/1PP2PP1/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP w kq - 0 1'
-        } else {
-          this.fen = this.c960_fen(this.curVar)
-        }
+        this.fen = this.c960_fen(this.curVar)
         this.$store.dispatch('curVar960Fen', this.fen)
         this.$store.dispatch('set960', { fen: this.fen, is960: true })
       } else {
@@ -191,7 +183,7 @@ input[type=number] {
   font-size: 25px;
 }
 .button:hover {
-  background-color: var(--hover-color);
+  background-color: #22303d;
   cursor: pointer;
 }
 .board960 {

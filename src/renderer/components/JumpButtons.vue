@@ -102,7 +102,7 @@ i {
   border-radius: 5px 5px 5px 5px;
 }
 .jump:hover {
-  background-color: var(--hover-highlight-color);
+  background-color: #2196F3;
   color: white;
 }
 .round {

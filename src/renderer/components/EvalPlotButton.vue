@@ -79,10 +79,10 @@ input::-webkit-inner-spin-button {
 .inputDepth {
   position: relative;
   display: inline-block;
-  width: 40px;
+  width: 50px;
 }
 .inputField {
-  width: 25px;
+  width: 30px;
   background-color: var(--second-bg-color);
   color: var(--main-text-color);
 }
@@ -90,20 +90,22 @@ input::-webkit-inner-spin-button {
   color: var(--main-text-color);
 }
 .button {
-  padding: 3px;
-  border-radius: 3px;
+  padding: 5px;
+  border-radius: 5px;
   background-color:var(--button-color);
   color: white;
   box-shadow: 1px 1px 1px 1px black;
   outline: none;
 }
 .button:hover {
-  background-color: var(--hover-color);
+  background-color: #22303d;
   cursor: pointer;
 }
 .EvalPlotButton {
   display: inline-block;
   position: relative;
+  padding-top: 5px;
+  padding-left: 10px;
 }
 .EvalPlotButton::before{
   content: attr(data-text);

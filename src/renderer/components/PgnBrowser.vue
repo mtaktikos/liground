@@ -10,26 +10,12 @@
           placeholder="filter games"
         >
         <span
-          id="icon"
           slot="extra"
           class="icon mdi mdi-magnify"
         />
         <i
-          id="icon"
-          class="icon mdi mdi-filter-menu-outline"
+          class="icon mdi mdi-cog-outline"
           @click="openContextMenu()"
-        />
-        <i
-          id="icon"
-          class="icon mdi mdi-plus-box-outline"
-          @click="openAddPgnModal()"
-        />
-      </div>
-      <div>
-        <AddPgnModal
-          v-if="AddPgnModal.visible"
-          :title="AddPgnModal.title"
-          @close="AddPgnModal.visible = false"
         />
       </div>
       <template v-if="groupByRound">
@@ -84,12 +70,6 @@
         </div>
       </template>
     </div>
-    <div
-      class="footer"
-      @click="removeSafedPGN"
-    >
-      <em class="icon mdi mdi-trash-can-outline" />
-    </div>
   </div>
 </template>
 
@@ -97,17 +77,11 @@
 import { remote } from 'electron'
 import { mapGetters } from 'vuex'
 import { bus } from '../main'
-import AddPgnModal from './AddPgnModal'
 
 export default {
   name: 'PgnBrowser',
-  components: { AddPgnModal },
   data: function () {
     return {
-      AddPgnModal: {
-        visible: false,
-        title: ''
-      },
       gameFilter: '',
       rounds: [],
       groupByRound: true,
@@ -220,22 +194,6 @@ export default {
       this.rounds.forEach(round => {
         round.visible = value
       })
-    },
-    openAddPgnModal () {
-      this.AddPgnModal = {
-        visible: true,
-        title: 'Add new PGN'
-      }
-    },
-    removeSafedPGN () {
-      if (confirm('Do you really want to remove the safed PGNs and reset the board?')) {
-        document.dispatchEvent(new Event('resetPlot'))
-        this.$store.dispatch('resetBoard', { is960: false }) // used to exit 960 Mode
-      }
-      if (this.$store.getters.loadedGames) {
-        const games = []
-        this.$store.dispatch('loadedGames', games)
-      }
     }
   }
 }
@@ -245,8 +203,7 @@ export default {
 #gameselect {
   overflow-y: auto;
   overflow-x: auto;
-  height: 95%;
-  border: 0px solid var(--main-border-color);
+  height: 100%
 }
 
 .optionlabel {
@@ -254,7 +211,7 @@ export default {
 }
 
 #gamefilter {
-  max-width: 55%;
+  max-width: 65%;
   background-color: var(--second-bg-color);
   color: var(--main-text-color);
 }
@@ -286,36 +243,28 @@ export default {
   color: white;
 }
 
-.icon {
+.icon.mdi-magnify {
+  padding: 0px 6px;
+  margin: 0px 1px;
+  border-radius: 5px;
+  background-color: var(--button-color);
+  box-shadow: 1px 1px 1px 1px black;
   color: white;
+}
+
+.icon.mdi-magnify:hover {
+  background-color: #22303d;
   cursor: pointer;
 }
 
-.icon:hover {
-  background-color: var(--hover-color);
-  border-radius: 8px;
+.icon.mdi-cog-outline:hover {
   cursor: pointer;
 }
 
 .search {
-  background-color: var(--button-color);
-  border-bottom: 1px solid var(--main-border-color);
-  padding: 2px 2px;
+  padding: 5px 0px;
   white-space: nowrap;
   width: 100%;
-}
-
-.footer {
-  border-top: 1px solid var(--main-border-color);
-  background-color: var(--button-color);
-  height: 5%;
-}
-.footer:hover {
-  background-color: var(--hover-color);
-}
-.icon.mdi-trash-can-outline {
-  font-size: 100%;
-
 }
 
 .unsupported {

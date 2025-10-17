@@ -1,11 +1,13 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import ffish from 'ffish'
-import { engine } from './engine'
+import engine from './engine'
 import allEngines from './store/engines'
+import fs from 'fs'
 
 import moveAudio from './assets/audio/Move.mp3'
 import captureAudio from './assets/audio/Capture.mp3'
+import { contentTracing } from 'electron'
 
 Vue.use(Vuex)
 
@@ -24,6 +26,12 @@ class TwoWayMap {
   getAll () { return this.map }
   get (key) { return this.map[key] }
   revGet (key) { return this.reverseMap[key] }
+
+  append(value, key) {
+      this.reverseMap[value] = key
+      this.keys.concat(key)
+  }
+
 }
 
 /**
@@ -105,20 +113,8 @@ const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 
 export const store = new Vuex.Store({
   state: {
-    engineIndex: 1,
-    enginesActive: [false],
     initialized: false,
     active: false,
-    PvE: false,
-    PvEParam: 'go movetime 1000',
-    PvEValue: 'time',
-    PvEInput: 1000,
-    resized: 0,
-    resized9x9height: 0,
-    resized9x9width: 0,
-    resized9x10height: 0,
-    resized9x10width: 0,
-    dimNumber: 0,
     turn: true,
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     lastFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', // to track the end of the current line
@@ -141,12 +137,9 @@ export const store = new Vuex.Store({
       Makruk: 'makruk',
       Shogi: 'shogi',
       Janggi: 'janggi',
-      Xiangqi: 'xiangqi',
-      Fischerandom: 'fischerandom'
-
+      Xiangqi: 'xiangqi'
     }),
     openedPGN: false,
-    QuickTourIndex: 0,
     evalPlotDepth: 20,
     orientation: 'white',
     message: 'hello from Vuex',
@@ -159,7 +152,6 @@ export const store = new Vuex.Store({
       options: []
     },
     engineSettings: {},
-    listOfEngineStats: [],
     engineStats: {
       depth: 0,
       seldepth: 0,
@@ -177,12 +169,6 @@ export const store = new Vuex.Store({
         ucimove: ''
       }
     ],
-    numberOfEngines: [
-      {
-        number: 1
-      }
-    ],
-    engineCounter: 1,
     hoveredpv: -1,
     counter: 0,
     pieceStyle: 'cburnett',
@@ -198,30 +184,31 @@ export const store = new Vuex.Store({
     menuAtMove: null,
     displayMenu: true,
     darkMode: false,
-    muteButton: false,
     fenply: 1,
     internationalVariants: [
-      '+ Add Custom', 'chess', 'crazyhouse', 'horde', 'kingofthehill', '3check', 'racingkings', 'antichess', 'atomic'
+      'chess', 'crazyhouse', 'horde', 'kingofthehill', '3check', 'racingkings', 'antichess', 'atomic', 'hoppelpoppel'
     ],
     seaVariants: [
-      '+ Add Custom', 'makruk'
+      'makruk'
     ],
     xiangqiVariants: [
-      '+ Add Custom', 'xiangqi'
+      'xiangqi'
     ],
     janggiVariants: [
-      '+ Add Custom', 'janggi'
+      'janggi'
     ],
     shogiVariants: [
-      '+ Add Custom', 'shogi'
+      'shogi'
+    ],
+    variantDrops: [
+      'crazyhouse', 'shogi'
+    ],
+    variantGating: [
+      'seirawan'
     ],
     clock: null
   },
   mutations: { // sync
-    increaseEngineNumber (state) {
-      state.numberOfEngines.push({ number: 2 })
-      state.engineCounter++
-    },
     curVar960Fen (state, payload) {
       state.curVar960Fen = payload
     },
@@ -230,12 +217,6 @@ export const store = new Vuex.Store({
     },
     fen (state, payload) {
       state.fen = payload
-    },
-    engineIndex (state, payload) {
-      state.engineIndex = payload
-    },
-    enginesActive (state, payload) {
-      state.enginesActive = payload
     },
     startFen (state, payload) {
       state.startFen = payload
@@ -269,45 +250,6 @@ export const store = new Vuex.Store({
     },
     orientation (state, payload) {
       state.orientation = payload
-    },
-    PvE (state, payload) {
-      state.PvE = payload
-    },
-    PvEParam (state, payload) {
-      state.PvEParam = payload
-    },
-    PvEValue (state, payload) {
-      state.PvEValue = payload
-    },
-    PvEInput (state, payload) {
-      state.PvEInput = payload
-    },
-    quicktourIndexIncr (state) {
-      state.QuickTourIndex++
-    },
-    quicktourIndexDecr (state) {
-      state.QuickTourIndex--
-    },
-    quicktourSetZero (state) {
-      state.QuickTourIndex = 0
-    },
-    dimNumber (state, payload) {
-      state.dimNumber = payload
-    },
-    resized (state, payload) {
-      state.resized = payload
-    },
-    resized9x9width (state, payload) {
-      state.resized9x9width = payload
-    },
-    resized9x9height (state, payload) {
-      state.resized9x9height = payload
-    },
-    resized9x10width (state, payload) {
-      state.resized9x10width = payload
-    },
-    resized9x10height (state, payload) {
-      state.resized9x10height = payload
     },
     active (state, payload) {
       state.active = payload
@@ -429,6 +371,80 @@ export const store = new Vuex.Store({
       state.selectedGame = null
       state.moves = []
     },
+    refreshVariants (state, payload) {
+      //console.log("Without ini: ", ffish.variants())
+      if (payload != null) {
+        let data = fs.readFileSync(payload);
+        ffish.loadVariantConfig(data)
+        //console.log(payload, "- Variants.ini loaded")
+        //console.log("All ini variants 1:", ffish.variants())
+      }
+      const all_ffish_variants = ffish.variants().split(' ')
+      //console.log("All ini variants2 :", ffish.variants())
+      const fish_map = {}
+      const international_vars = []
+      const janggi_vars = []
+      const makruk_vars = []
+      const xiangqi_vars = []
+      const shogi_vars = []
+      const has_drops = []
+      const has_gating = []
+      let num_ranks = 0
+      let num_files = 0
+      for (const v in all_ffish_variants) {
+        const variant_name = `${all_ffish_variants[v]}`
+        num_files = 0
+        fish_map[variant_name] = variant_name //new Map to add the new variants to VariantsOptions from Fish
+        if (variant_name.includes("shogi")) {
+          shogi_vars.push(variant_name)
+        } else if (variant_name.includes("xiangqi")) {
+          xiangqi_vars.push(variant_name)
+        } else if ((variant_name.includes("mak")) || (variant_name.includes("sittuyin"))) {
+          makruk_vars.push(variant_name)
+        } else if (variant_name.includes("janggi")) {
+          janggi_vars.push(variant_name)
+        } else {
+          international_vars.push(variant_name)
+        }
+        const fish_fen = ffish.startingFen(variant_name) //get the starting FEN to check how many ranks/files and if it has pockets and/or gating
+        num_ranks = fish_fen.match(/\//g).length+1 // Number of char("/") in the FEN + 1 for ranks
+        const fen_file=fish_fen.split('/')[0] // Analyse first file only (since fairy does not have limited boards for now)
+        for (const i in fen_file) {
+          if (isNaN(parseInt(`${fen_file[i]}`))) {
+              //console.log("String: ",`${fen_file[i]}`, "int:",parseInt(`${fen_file[i]}`))
+              num_files+=parseInt(`${fen_file[i]}`)
+          }
+          else if (`${fen_file[i]}` != '+') { //Ignoring the + from promoted pieces
+            num_files++
+          }
+        }        
+        //console.log("Variant: ", `${all_ffish_variants[v]}`, "FEN: ", fish_fen, "Ranks: ", num_ranks, "Files:", num_files)
+        if (fish_fen.includes("[")) { //Includes all shogi Variants with [-] and Crazyhouse-like variants with []
+          has_drops.push(`${all_ffish_variants[v]}`)
+          //console.log("Variant: ", `${all_ffish_variants[v]}`, "FEN: ", fish_fen, "Has Drops")
+          //console.log("has drops")
+        }
+        const gating_check = fish_fen.split(' ')[2]
+        /*Gating check -> If the castling FEN has more than 4 characters it means 
+        the variant has gating (Probably very innacurate due to variants who might want gating in certain Files, lets say 4, Seeking for a better detector)
+        To Note: Since shogi doesn't have castling, this can indicate a shogi variant, For future references: Check if it's viable or not instead of string detector*/
+        if (gating_check.length > 4) { 
+            has_gating.push(variant_name)
+        }
+        //console.log("Variant: ", variant_name, " gating check: ", gating_check) 
+      }
+      state.variantDrops = has_drops
+      state.variantGating = has_gating
+      //console.log("variant drops", state.variantDrops)
+      //console.log("Variant Gating: ", state.variantGating)
+      state.variantOptions = new TwoWayMap(fish_map)
+      state.seaVariants = makruk_vars
+      state.janggiVariants = janggi_vars
+      state.xiangqiVariants = xiangqi_vars
+      state.shogiVariants = shogi_vars
+      state.internationalVariants = international_vars
+
+    },
     appendMoves (state, payload) {
       const mov = payload.move.split(' ')
       const prev = payload.prev
@@ -475,13 +491,11 @@ export const store = new Vuex.Store({
       if (state.openedPGN) {
         return
       }
-      if (!state.muteButton) {
-        let note = new Audio(moveAudio)
-        if (move.toString().includes('x')) {
-          note = new Audio(captureAudio)
-        }
-        note.play()
+      let note = new Audio(moveAudio)
+      if (move.toString().includes('x')) {
+        note = new Audio(captureAudio)
       }
+      note.play()
     },
     gameInfo (state, payload) {
       state.gameInfo = payload
@@ -510,12 +524,11 @@ export const store = new Vuex.Store({
     },
     switchDarkMode (state) {
       state.darkMode = !state.darkMode
-    },
-    switchMuteButton (state) {
-      state.muteButton = !state.muteButton
+      localStorage.darkMode = state.darkMode
     },
     evalPlotDepth (state, payload) {
       state.evalPlotDepth = payload
+      localStorage.evalPlotDepth = payload
     },
     fenply (state, payload) {
       state.fenply = payload
@@ -529,18 +542,6 @@ export const store = new Vuex.Store({
     },
     resetEngineTime (state) {
       clearInterval(state.clock)
-    },
-    saveSettings (state) {
-      localStorage.darkMode = state.darkMode
-      localStorage.muteButton = state.muteButton
-      localStorage.evalPlotDepth = state.evalPlotDepth
-      localStorage.variant = state.variant
-      localStorage.resized = state.resized
-      localStorage.resized9x9width = state.resized9x9width
-      localStorage.resized9x9height = state.resized9x9height
-      localStorage.resized9x10width = state.resized9x10width
-      localStorage.resized9x10height = state.resized9x10height
-      localStorage.dimNumber = state.dimNumber
     }
   },
   actions: { // async
@@ -568,17 +569,13 @@ export const store = new Vuex.Store({
           context.commit('switchDarkMode')
         }
       }
-      if (localStorage.muteButton) {
-        if (localStorage.muteButton === 'true') {
-          context.commit('switchMuteButton')
-        }
-      }
       if (localStorage.internationalPieceStyle) {
         context.commit('pieceStyle', localStorage.internationalPieceStyle)
       }
       if (localStorage.internationalBoardStyle) {
         context.commit('boardStyle', localStorage.internationalBoardStyle)
       }
+      localStorage.variant="atomic" //If I get stuck
       if (localStorage.variant) {
         context.commit('variant', localStorage.variant)
       }
@@ -590,9 +587,14 @@ export const store = new Vuex.Store({
         }
       }
       context.commit('newBoard')
+      /*var variantes = ffish.variants()
+      console.log('variants', variantes) Pyffish was loaded here*/
       context.dispatch('updateBoard')
       context.dispatch('changeEngine', context.getters.availableEngines[0].name)
       context.commit('initialized', true)
+      context.commit('refreshVariants', localStorage.INIPath)
+      console.log("engines: ", this.state.allEngines)
+
     },
     updateBoard (context) {
       const { board } = context.state
@@ -654,72 +656,10 @@ export const store = new Vuex.Store({
       context.commit('resetMultiPV')
       context.commit('resetEngineStats')
     },
-    setPvEParam (context, payload) {
-      context.commit('PvEParam', payload)
-    },
-    setPvEValue (context, payload) {
-      context.commit('PvEValue', payload)
-    },
-    setPvEInput (context, payload) {
-      context.commit('PvEInput', payload)
-    },
-    setDimNumber (context, payload) {
-      context.commit('dimNumber', payload)
-    },
-    setResized (context, payload) {
-      context.commit('resized', payload)
-    },
-    setResized9x9width (context, payload) {
-      context.commit('resized9x9width', payload)
-    },
-    setResized9x9height (context, payload) {
-      context.commit('resized9x9height', payload)
-    },
-    setResized9x10width (context, payload) {
-      context.commit('resized9x10width', payload)
-    },
-    setResized9x10height (context, payload) {
-      context.commit('resized9x10height', payload)
-    },
     goEngine (context) {
       engine.send('go infinite')
       context.commit('setEngineClock')
       context.commit('active', true)
-    },
-    goEnginePvE (context) {
-      engine.send(context.getters.PvEParam)
-      context.commit('setEngineClock')
-    },
-    PvEMakeMove (context, payload) {
-      const state = context.state
-      if (state.active && state.PvE && !state.turn) {
-        context.dispatch('push', { move: payload, prev: context.getters.currentMove[0] })
-      }
-    },
-    setActiveTrue (context) {
-      context.commit('active', true)
-    },
-    setActiveFalse (context) {
-      context.commit('active', false)
-    },
-    enginesActive (context, payload) {
-      context.commit('enginesActive', payload)
-    },
-    PvEtrue (context) {
-      context.commit('PvE', true)
-    },
-    stopEnginePvE (context) {
-      engine.send('stop')
-    },
-    PvEfalse (context) {
-      context.commit('PvE', false)
-      if (!context.getters.turn) {
-        context.dispatch('stopEngine')
-      } else {
-        context.commit('resetEngineTime')
-        context.commit('active', false)
-      }
-      context.dispatch('resetEngineData')
     },
     stopEngine (context) {
       engine.send('stop')
@@ -728,13 +668,10 @@ export const store = new Vuex.Store({
     },
     restartEngine (context) {
       context.dispatch('resetEngineData')
-      if (context.getters.active && !context.getters.PvE) {
+      if (context.getters.active) {
         context.dispatch('stopEngine')
         context.dispatch('position')
         context.dispatch('goEngine')
-      } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
-        context.dispatch('position')
-        context.dispatch('goEnginePvE')
       }
     },
     position (context) {
@@ -786,39 +723,6 @@ export const store = new Vuex.Store({
     active (context, payload) {
       context.commit('active', payload)
     },
-    PvE (context, payload) {
-      context.commit('PvE', payload)
-    },
-    engineIndex (context, payload) {
-      context.commit('engineIndex', payload)
-    },
-    PvEParam (context, payload) {
-      context.commit('PvEParam', payload)
-    },
-    PvEValue (context, payload) {
-      context.commit('PvEValue', payload)
-    },
-    PvEInput (context, payload) {
-      context.commit('PvEInput', payload)
-    },
-    dimNumber (context, payload) {
-      context.commit('dimNumber', payload)
-    },
-    resized (context, payload) {
-      context.commit('resized', payload)
-    },
-    resized9x9width (context, payload) {
-      context.commit('resized9x9width', payload)
-    },
-    resized9x9height (context, payload) {
-      context.commit('resized9x9height', payload)
-    },
-    resized9x10width (context, payload) {
-      context.commit('resized9x10width', payload)
-    },
-    resized9x10height (context, payload) {
-      context.commit('resized9x10height', payload)
-    },
     variant (context, payload) {
       if (context.getters.variant !== payload) {
         // prepare engine
@@ -830,6 +734,7 @@ export const store = new Vuex.Store({
 
         // update variant
         context.commit('variant', payload)
+        localStorage.variant = payload
         const variants = ['chess', 'crazyhouse', 'racingkings', '3check', 'antichess', 'atomic']
         if (variants.includes(payload)) {
           const varFen = context.getters.curVar960Fen
@@ -911,6 +816,7 @@ export const store = new Vuex.Store({
         await context.dispatch('runBinary', { binary, cwd })
         const variantOption = context.state.engineInfo.options.find(option => option.name === 'UCI_Variant')
         updated.variants = variantOption ? variantOption.var : ['chess']
+        //console.log(updated.variants)
       }
       updated.binary = binary
       updated.cwd = cwd
@@ -980,11 +886,11 @@ export const store = new Vuex.Store({
       context.dispatch('setEngineOptions', options)
     },
     setEngineOptions (context, payload) {
-      if (context.getters.active && !context.getters.PvE) {
-        context.dispatch('stopEngine')
-      } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
+      
+      if (context.getters.active) {
         context.dispatch('stopEngine')
       }
+
       context.dispatch('resetEngineData')
       for (const [name, value] of Object.entries(payload)) {
         checkOption(context.state.engineInfo.options, name, value)
@@ -997,7 +903,36 @@ export const store = new Vuex.Store({
           engine.send(`setoption name ${name}`)
         }
       }
+      
       localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
+    },
+    async refreshVariants (context, payload) { //ToDo BUGGED - FIX NEEDED
+      const engines = { ...context.state.allEngines }
+      let updated
+      updated = engines[context.state.activeEngine]
+      const variantpath = context.state.engineSettings["VariantPath"]
+      //console.log("COnsole ENGBINE SHIT: ", context.state.engineSettings)
+      //await context.dispatch('initEngineOptions')
+      //await context.dispatch('setEngineOptions', context.state.engineSettings)
+      //const variantOption = context.dispatch('sendEngineCommand','uci')
+      //context.commit('engineInfo', await engine.run(updated.binary, updated.cwd))
+      /*await context.dispatch('runBinary', {
+        binary: updated.binary,
+        cwd: updated.cwd
+      })*/
+      //const variantOption = context.state.engineInfo.options.find(option => option.name === 'UCI_Variant')
+      //var info = await engine.run(updated.binary, updated.cwd)
+      //await context.dispatch('initEngineOptions')
+      //await context.dispatch('setEngineOptions', context.state.engineSettings)
+      const info = await engine.run(updated.binary, updated.cwd)
+      //context.commit('engineInfo', await engine.check_variants(updated.binary, updated.cwd))
+      //console.log("info from binary: "+info.options['VariantPath'])
+      const variantOption = info.options.find(option => option.name === 'UCI_Variant')
+      //const variantOption = context.state.engineInfo.options.find(option => option.name === 'UCI_Variant')
+      //console.log("VariantOption: ",variantOption)
+      const variants = variantOption ? variantOption.var : ['chess']
+      updated.variants=variants
+      console.log("updated variants from: ", updated.binary, " variants: ", updated.variants)
     },
     idName (context, payload) {
       context.commit('idName', payload)
@@ -1010,6 +945,7 @@ export const store = new Vuex.Store({
       if (!context.state.active) {
         return
       }
+
       // update engine stats
       const stats = { ...context.state.engineStats }
       for (const key of Object.keys(stats)) {
@@ -1135,35 +1071,11 @@ export const store = new Vuex.Store({
     switchDarkMode (context) {
       context.commit('switchDarkMode')
     },
-    quicktourIndexIncr (context) {
-      context.commit('quicktourIndexIncr')
-    },
-    quicktourIndexDecr (context) {
-      context.commit('quicktourIndexDecr')
-    },
-    quicktourSetZero (context) {
-      context.commit('quicktourSetZero')
-    },
-    switchMuteButton (context) {
-      context.commit('switchMuteButton')
-    },
     evalPlotDepth (context, payload) {
       context.commit('evalPlotDepth', payload)
-    },
-    saveSettings (context) {
-      context.commit('saveSettings')
     }
   },
   getters: {
-    engineNumber (state) {
-      return state.numberOfEngines
-    },
-    engineIndex (state) {
-      return state.engineIndex
-    },
-    enginesActive (state) {
-      return state.enginesActive
-    },
     currentMove (state) {
       return state.moves.filter(moves => moves.fen === state.fen)
     },
@@ -1188,36 +1100,6 @@ export const store = new Vuex.Store({
     },
     active (state) {
       return state.active
-    },
-    PvE (state) {
-      return state.PvE
-    },
-    PvEParam (state) {
-      return state.PvEParam
-    },
-    PvEValue (state) {
-      return state.PvEValue
-    },
-    PvEInput (state) {
-      return state.PvEInput
-    },
-    dimNumber (state) {
-      return state.dimNumber
-    },
-    resized (state) {
-      return state.resized
-    },
-    resized9x9width (state) {
-      return state.resized9x9width
-    },
-    resized9x9height (state) {
-      return state.resized9x9height
-    },
-    resized9x10width (state) {
-      return state.resized9x10width
-    },
-    resized9x10height (state) {
-      return state.resized9x10height
     },
     started (state) {
       return state.started
@@ -1320,8 +1202,12 @@ export const store = new Vuex.Store({
       // if the SAN in the pgn is the same than the SAN in states.moves
       // and we are at the last move, return pgn result
       if (state.selectedGame) {
-        const pgnBoard = new ffish.Board(state.variant, state.startFen)
-
+        let pgnBoard
+        if (state.selectedGame.headers('FEN')) {
+          pgnBoard = new ffish.Board(state.variant, state.selectedGame.headers('FEN'))
+        } else {
+          pgnBoard = state.board
+        }
         const pgnMoves = state.selectedGame.mainlineMoves()
         const san = pgnBoard.variationSan(pgnMoves, ffish.Notation.SAN, false)
         let str = ''
@@ -1336,8 +1222,10 @@ export const store = new Vuex.Store({
 
       if (typeof mate === 'number') {
         return `#${calcForSide(mate, state.turn)}`
-      } else if (state.board != null && state.board.isGameOver()) {
-        return state.board.result()
+      } else if (currentMove && currentMove.name.includes('#')) {
+        return state.turn ? '0-1' : '1-0'
+      } else if (state.legalMoves.length === 0) {
+        return '1/2-1/2'
       } else {
         return cpToString(getters.cpForWhite)
       }
@@ -1410,6 +1298,12 @@ export const store = new Vuex.Store({
     isShogi (state) {
       return state.shogiVariants.includes(state.variant)
     },
+    hasPockets (state) {
+      return state.variantDrops.includes(state.variant)
+    },
+    hasGating (state) {
+      return state.variantGating.includes(state.variant)
+    },
 
     // TODO: integrate getters into store state?
     moveStack (state) {
@@ -1454,12 +1348,6 @@ export const store = new Vuex.Store({
     },
     darkMode (state) {
       return state.darkMode
-    },
-    QuickTourIndex (state) {
-      return state.QuickTourIndex
-    },
-    muteButton (state) {
-      return state.muteButton
     }
   }
 })
@@ -1477,5 +1365,4 @@ ffish.onRuntimeInitialized = () => {
 
   // capture engine info
   engine.on('info', info => store.dispatch('updateMultiPV', info))
-  engine.on('bestmove', move => store.dispatch('PvEMakeMove', move))
 })()

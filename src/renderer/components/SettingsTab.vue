@@ -5,23 +5,12 @@
       <div class="switch-container">
         <span>Dark Mode</span>
         <DarkModeSwitch />
-        <span>Mute</span>
-        <MuteButton />
       </div>
-      <a
-        class="btn green"
-        @click="saveStandardSettings"
-      >
-        Save as standard
-      </a>
     </div>
     <div class="panel">
       <span class="title">Engine Settings</span>
       <div class="bar">
-        <EngineSelect
-          class="select"
-          @sendSelected="changeEngine($event)"
-        />
+        <EngineSelect class="select" />
         <div
           class="icon blue mdi mdi-pencil"
           @click="editEngine"
@@ -103,39 +92,6 @@
           </template>
         </tr>
       </table>
-      <EngineModal
-        v-if="modal.visible"
-        :title="modal.title"
-        :initial-name="modal.name"
-        :initial-binary="modal.binary"
-        :initial-cwd="modal.cwd"
-        :initial-logo="modal.logo"
-        @close="modal.visible = false"
-        @save="modal.save"
-      />
-      <div>
-        <span class="title">PvE Settings</span>
-        <Multiselect
-          v-model="value"
-          class="multiselect"
-          :options="options"
-          @input="showSettings"
-        />
-        <table class="table">
-          <tr>
-            <td>{{ settingsName }}</td>
-            <td>
-              <input
-                v-model.number="PvEInput"
-                type="number"
-                :step="1"
-                :min="1"
-                class="input"
-              >
-            </td>
-          </tr>
-        </table>
-      </div>
       <a
         class="btn green"
         @click="save"
@@ -148,6 +104,20 @@
       >
         Cancel
       </a>
+      <a
+        class="btn blue"
+        @click="refresh"
+      > Refresh</a>
+      <EngineModal
+        v-if="modal.visible"
+        :title="modal.title"
+        :initial-name="modal.name"
+        :initial-binary="modal.binary"
+        :initial-cwd="modal.cwd"
+        :initial-logo="modal.logo"
+        @close="modal.visible = false"
+        @save="modal.save"
+      />
     </div>
   </div>
 </template>
@@ -157,19 +127,11 @@ import { mapGetters } from 'vuex'
 import EngineSelect from './EngineSelect'
 import EngineModal from './EngineModal'
 import DarkModeSwitch from './DarkModeSwitch'
-import MuteButton from './MuteButton'
 import defaultLogo from '../assets/images/engines/chess_engine.svg'
-import Multiselect from 'vue-multiselect'
 
 export default {
   name: 'SettingsTab',
-  components: {
-    EngineSelect,
-    EngineModal,
-    DarkModeSwitch,
-    MuteButton,
-    Multiselect
-  },
+  components: { EngineSelect, EngineModal, DarkModeSwitch },
   data () {
     return {
       settings: {},
@@ -177,22 +139,11 @@ export default {
         visible: false,
         title: '',
         save: () => {}
-      },
-      value: 'time',
-      options: ['time', 'nodes', 'depth'],
-      settingsName: 'Time in seconds',
-      PvEInput: 1
+      }
     }
   },
   computed: {
-    ...mapGetters([
-      'variant',
-      'engineOptions',
-      'engineSettings',
-      'selectedEngine',
-      'engineIndex',
-      'active'
-    ])
+    ...mapGetters(['variant', 'engineOptions', 'engineSettings', 'selectedEngine'])
   },
   watch: {
     engineOptions () {
@@ -200,30 +151,6 @@ export default {
     }
   },
   methods: {
-    changeEngine (event) {
-      if (this.engineIndex < 2) {
-        this.$store.dispatch('changeEngine', event)
-      }
-    },
-    showSettings (payload) {
-      if (payload === 'nodes') {
-        this.settingsName = 'Number of nodes in Million'
-        this.value = 'nodes'
-        this.PvEInput = 5
-      } else if (payload === 'time') {
-        this.settingsName = 'Time in seconds'
-        this.value = 'time'
-        this.PvEInput = 1
-      } else if (payload === 'depth') {
-        this.PvEInput = 20
-        this.settingsName = 'depth of'
-        this.value = 'depth'
-      }
-    },
-    saveStandardSettings () {
-      this.$store.dispatch('saveSettings')
-      this.$store.commit('viewAnalysis', true)
-    },
     save () {
       this.updateSettings()
       this.$store.commit('viewAnalysis', true)
@@ -231,6 +158,12 @@ export default {
     cancel () {
       this.resetSettings()
       this.$store.commit('viewAnalysis', true)
+    },
+    refresh () {
+      this.refreshSettings()
+    },
+    refreshSettings () {
+      this.$store.dispatch('refreshVariants', this.selectedEngine)
     },
     updateSettings () {
       const changed = {}
@@ -240,31 +173,6 @@ export default {
         }
       }
       this.$store.dispatch('setEngineOptions', changed)
-      this.$store.dispatch('setPvEValue', this.value)
-      switch (this.value) {
-        case 'time':
-          this.$store.dispatch(
-            'setPvEParam',
-            'go movetime ' + this.PvEInput * 1000
-          )
-          this.$store.dispatch('setPvEInput', this.PvEInput * 1000)
-          break
-        case 'nodes':
-          this.$store.dispatch(
-            'setPvEParam',
-            'go nodes ' + this.PvEInput * 1000000 + ' movetime 60000'
-          )
-          this.$store.dispatch('setPvEInput', this.PvEInput * 1000000)
-          break
-        case 'depth':
-          this.$store.dispatch(
-            'setPvEParam',
-            'go depth ' + this.PvEInput + ' movetime 60000')
-          this.$store.dispatch('setPvEInput', this.PvEInput)
-          break
-        default:
-          break
-      }
     },
     triggerButtonSetting (optionName) {
       this.$store.dispatch('setEngineOptions', { [optionName]: null })
@@ -286,11 +194,10 @@ export default {
         binary,
         logo,
         cwd,
-        save: data =>
-          this.$store.dispatch('editEngine', {
-            old: this.selectedEngine.name,
-            changed: data
-          })
+        save: data => this.$store.dispatch('editEngine', {
+          old: this.selectedEngine.name,
+          changed: data
+        })
       }
     },
     deleteEngine () {
@@ -331,7 +238,7 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  align-self: center;
+  align-self: center
 }
 .switch-container > * {
   margin: 0 5px;
@@ -364,7 +271,7 @@ export default {
   color: #4aae9b;
 }
 .icon.blue:hover {
-  color: #7289da;
+  color: #2470b6;
 }
 .icon.red:hover {
   color: #b22222;
@@ -381,11 +288,11 @@ export default {
   text-align: left;
 }
 
-input[type='number'] {
+input[type=number] {
   text-align: right;
 }
 /* make arrows of number input always visible */
-input[type='number']::-webkit-inner-spin-button {
+input[type=number]::-webkit-inner-spin-button {
   opacity: 0.5;
 }
 
@@ -393,7 +300,6 @@ input[type='number']::-webkit-inner-spin-button {
   width: 100%;
   background-color: var(--second-bg-color);
   color: var(--main-text-color);
-  border: 1px solid var(--main-border-color);
 }
 
 .btn {
@@ -405,16 +311,23 @@ input[type='number']::-webkit-inner-spin-button {
 }
 .btn.green {
   color: white;
-  background-color: var(--save-btn-color);
+  background-color: #4aae9b;
 }
 .btn.green:hover {
-  background-color: var(--save-btn-hover);
+  background-color: #3c8577;
 }
 .btn.red {
   color: white;
-  background-color: var(--cancel-btn-color);
+  background-color: #b22222;
 }
 .btn.red:hover {
-  background-color: var(--cancel-btn-hover);
+  background-color: #8b1919;
+}
+.btn.blue {
+  color: white;
+  background-color: #1e46c9;
+}
+.btn.blue:hover {
+  background-color: #2a198b;
 }
 </style>

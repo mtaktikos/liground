@@ -39,6 +39,7 @@ function createWindow () {
     mainWindow = null
   })
 }
+
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
@@ -52,6 +53,7 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
 /**
  * Auto Updater
  *

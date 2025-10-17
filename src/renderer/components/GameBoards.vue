@@ -1,109 +1,37 @@
 <template>
-  <!-- All components but menubar -->
   <div id="inner">
     <div>
       <div class="main-grid">
         <div class="chessboard-grid">
-          <PgnBrowser
-            v-if="QuickTourIndex !== 1"
-            id="pgnbrowser"
-          />
-          <PgnBrowser
-            v-else
-            id="pgnbrowser-qt"
-          />
-          <div class="board-grid">
-            <div class="board">
-              <span>
-                <GameInfo
-                  v-if="QuickTourIndex !== 15"
-                  id="gameinfo"
-                />
-                <GameInfo
-                  v-else
-                  id="gameinfo-qt"
-                />
-              </span>
-              <div
-                class="scrollable"
-                @mousewheel.prevent.exact="scroll($event)"
-              >
-                <ChessGround
-                  v-if="QuickTourIndex !== 2"
-                  id="chessboard"
-                  :orientation="orientation"
-                  @onMove="showInfo"
-                />
-                <ChessGround
-                  v-else
-                  id="chessboard-qt"
-                  :orientation="orientation"
-                  @onMove="showInfo"
-                />
-              </div>
-              <EvalBar
-                v-if="QuickTourIndex !== 3"
-                class="evalbar"
-              />
-              <EvalBar
-                v-else
-                class="evalbar-qt"
+          <PgnBrowser id="pgnbrowser" />
+          <div class="board">
+            <div @mousewheel.prevent="scroll($event)">
+              <ChessGround
+                id="chessboard"
+                :orientation="orientation"
+                @onMove="showInfo"
               />
             </div>
+            <EvalBar class="evalbar" />
           </div>
-          <div
-            v-if="QuickTourIndex !== 4"
-            id="fen-field"
-          >
+          <div id="fen-field">
             FEN <input
               id="lname"
               type="text"
               name="lname"
               placeholder="fen position"
               :value="fen"
-              :size="setFenSize()"
+              size="60"
               @change="checkValidFEN"
             >
           </div>
-          <div
-            v-else
-            id="fen-field-qt"
-          >
-            FEN <input
-              id="lname"
-              type="text"
-              name="lname"
-              placeholder="fen position"
-              :value="fen"
-              :size="setFenSize()"
-              @change="checkValidFEN"
-            >
-          </div>
-          <div
-            v-if="QuickTourIndex !== 5"
-            id="selector-container"
-          >
-            <PieceStyleSelector id="piece-style" />
-            <BoardStyleSelector id="board-style" />
-            <EvalPlotButton id="evalbutton-style" />
-          </div>
-          <div
-            v-else
-            id="selector-container-qt"
-          >
+          <div id="selector-container">
             <PieceStyleSelector id="piece-style" />
             <BoardStyleSelector id="board-style" />
             <EvalPlotButton id="evalbutton-style" />
           </div>
         </div>
-        <EvalPlot
-          v-if="QuickTourIndex !== 6"
-          id="evalplot"
-        />
-        <EvalPlot
-          v-else
-          id="evalplot-qt"
-        />
+        <EvalPlot id="evalplot" />
         <div id="right-column">
           <AnalysisView
             id="analysisview"
@@ -138,8 +66,8 @@ import Vue from 'vue'
 import PgnBrowser from './PgnBrowser.vue'
 import SettingsTab from './SettingsTab'
 import EvalPlotButton from './EvalPlotButton'
-import GameInfo from './GameInfo.vue'
-import { mapGetters } from 'vuex'
+// TODO: use GameInfo component?
+// import GameInfo from './GameInfo.vue'
 
 export default {
   name: 'GameBoards',
@@ -150,7 +78,7 @@ export default {
     PieceStyleSelector,
     BoardStyleSelector,
     EvalPlot,
-    GameInfo,
+    // GameInfo,
     PgnBrowser,
     SettingsTab,
     EvalPlotButton
@@ -191,13 +119,12 @@ export default {
         }
       }
       return undefined
-    },
-    ...mapGetters(['QuickTourIndex'])
+    }
   },
   mounted () { // EventListener für Keyboardinput, ruft direkt die jeweilige Methode auf
     window.addEventListener('keydown', (event) => {
       const keyName = event.key
-      if (event.target.nodeName.toLowerCase() !== 'input' || event.target.type.toLowerCase() === 'checkbox') {
+      if (event.target.nodeName.toLowerCase() !== 'input') {
         if (keyName === 'ArrowUp') {
           event.preventDefault()
           this.moveToStart()
@@ -226,9 +153,6 @@ export default {
     }, false)
   },
   methods: {
-    setFenSize () {
-      return this.fen.length + 3
-    },
     scroll (event) { // TODO: also moves back and forth when being slightly next to the board and for example over the pockets
       if (event.deltaY < 0) {
         this.moveBackOne()
@@ -354,8 +278,9 @@ export default {
         const y = Math.floor(event.layerY / 40)
         // var stringPos = y * 9 + x
 
-        const letters = { 0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h' }
+        const letters = { 0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h', 8: 'i', 9: 'j', 10: 'k', 11: 'l' }
         let pieceCode = Vue.methds.pieceTypeToShort(this.selectedPockedPiece.boardA)
+
         pieceCode = { type: pieceCode, color: this.turnColor.charAt(0) }
         this.$store.dispatch('insertPieceAtPosition', ['boardA', pieceCode, letters[x] + (8 - y)])
       } else {
@@ -395,42 +320,17 @@ export default {
     "evalplot analysisview";
 }
 .chessboard-grid {
-  min-width: 1050px;
+  min-width: 925px;
   grid-area: chessboard;
   display: grid;
   grid-template-columns: 20% auto;
-  grid-template-rows: auto 150px auto;
+  grid-template-rows: auto auto auto;
   grid-template-areas:
-    "pgnbrowser board-grid"
-    "selector board-grid "
-    ". fenfield";
-}
-
-.board-grid {
-  grid-area: board-grid;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
-
-#gameinfo {
-  grid-area: gameinfo;
-  border: 1px solid var(--main-border-color);
-  margin-bottom: 5px;
-  margin-left: 5px;
-  border-radius: 5px;
-  background-color: var(--second-bg-color);
-}
-#gameinfo-qt {
-  grid-area: gameinfo;
-  border: 5px solid var(--quicktour-highlight);
-  margin-bottom: 5px;
-  margin-left: 5px;
-  border-radius: 5px;
-  background-color: var(--second-bg-color);
+    "pgnbrowser ."
+    ". fenfield"
+    ". selector";
 }
 #analysisview {
-  grid-area: analysisview;
   height: 100%;
   width: 100%;
 }
@@ -444,14 +344,11 @@ export default {
 }
 input {
   font-size: 12pt;
+  max-width: 60vw;
 }
 #fen-field {
   grid-area: fenfield;
   /*margin-left: 48px;*/
-}
-#fen-field-qt {
-  grid-area: fenfield;
-  border: 5px solid var(--quicktour-highlight);
 }
 #lname {
   background-color: var(--second-bg-color);
@@ -460,21 +357,10 @@ input {
 #selector-container {
   grid-area: selector;
   display: grid;
+  grid-template-columns: 5% 30% 5% 30%  30%;
   grid-template-areas:
-  "piecestyle"
-  "boardstyle"
-  "evalButton";
-  margin-left: 5px;
-}
-#selector-container-qt {
-  grid-area: selector;
-  display: grid;
-  grid-template-areas:
-  "piecestyle"
-  "boardstyle"
-  "evalButton";
-  margin-left: 5px;
-  border: 5px solid var(--quicktour-highlight);
+  ". piecestyle . boardstyle evalButton";
+  height: 60px;
 }
 #piece-style {
   grid-area: piecestyle;
@@ -488,39 +374,18 @@ input {
 }
 #pgnbrowser {
   grid-area: pgnbrowser;
-  border: 1px solid var(--main-border-color);
-  border-radius: 4px;
-  margin-left: 5px;
-  max-height: 490px;
-}
-#pgnbrowser-qt {
-  grid-area: pgnbrowser;
-  border: 5px solid var(--quicktour-highlight);
+  border: 1px solid black;
   border-radius: 4px;
   margin-left: 1em;
   max-height: 60vh;
 }
-.scrollable {
-  grid-area: scrollable;
+.board {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  width: max-content
-}
-
-.board {
-  grid-area: board;
-  display: grid;
-  grid-template-areas:
-  "gameinfo ."
-  "scrollable evalbar";
 }
 #chessboard {
   display: inline-block;
-}
-#chessboard-qt {
-  display: inline-block;
-  border: 5px solid var(--quicktour-highlight);
 }
 .bottom-margin {
   margin-bottom: 1.5em;
@@ -530,25 +395,13 @@ input {
   margin: 0 auto;
 }
 .evalbar {
-  grid-area: evalbar;
   margin-left: 8px;
-  height: auto;
-}
-.evalbar-qt {
-  grid-area: evalbar;
-  margin-left: 8px;
-  height: auto;
-  border: 3px solid var(--quicktour-highlight);
 }
 #analysisview {
   margin-left: 15px;
 }
 #evalplot {
   grid-area: evalplot;
-}
-#evalplot-qt {
-  grid-area: evalplot;
-  border: 5px solid var(--quicktour-highlight);
 }
 #evalbutton-style {
   margin-top: 10px;
@@ -561,11 +414,6 @@ input {
   color: var(--main-text-color, white) !important;
   background-color: var(--second-bg-color, white) !important;
   border-color: var(--main-border-color, white) !important;
-}
-.multiselect-qt {
-  color: var(--main-text-color, white) !important;
-  background-color: var(--second-bg-color, white) !important;
-  border-color: var(--quicktour-highlight, white) !important;
 }
 .multiselect__content ,
 .multiselect__content-wrapper,
