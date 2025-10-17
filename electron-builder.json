@@ -7,19 +7,10 @@
   "files": [
     "dist/electron/**/*"
   ],
-  "asarUnpack":[
-    "static"
-  ],
   "extraResources": [
     {
       "from": "engines",
       "to": "engines"
-    }
-  ],
-  "extraFiles":[
-    {
-      "from": "static",
-      "to": "static"
     }
   ],
   "dmg": {

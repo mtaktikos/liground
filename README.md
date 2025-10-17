@@ -2,45 +2,7 @@
 
 > A free, open-source and modern Chess Variant Analysis GUI for the 21st century
 
-![LiGround](https://github.com/LucyLMM/images/blob/main/LiGround_Screenshot.PNG)
-<!-- <img src="./media/screenshots/liground-0.0.1.png" alt="LiGround screenshot" title="LiGround screenshot." /> -->
-
-## Download
-
-### Binaries
-
-We provide binary releases for the following plattforms:
-
-Operating System | Version
----              | ---
-Linux            | [**liground-0.4.0-linux.AppImage**](https://github.com/ml-research/liground/releases/download/0.4.0/liground-0.4.0-linux.AppImage)
-Windows          | [**liground-0.4.0-win.exe**](https://github.com/ml-research/liground/releases/download/0.4.0/liground-0.4.0-win.exe)                              
-Mac              | [**liground-0.4.0-mac.dmg**](https://github.com/ml-research/liground/releases/download/0.4.0/liground-0.4.0-mac.dmg)
-Mac              | [**liground-0.4.0-mac.zip**](https://github.com/ml-research/liground/releases/download/0.4.0/liground-0.4.0-mac.zip)
-
-The current _LiGround_ release and all its previous versions can also be found at [releases](https://github.com/ml-research/liground/releases).
-
-## Supported Games
-
-### Regional and Historical Games
-- [Chess](https://en.wikipedia.org/wiki/Chess)
-- [Janggi](https://en.wikipedia.org/wiki/Janggi)
-- [Makruk](https://en.wikipedia.org/wiki/Makruk)
-- [Shogi](https://en.wikipedia.org/wiki/Shogi)
-- [Xiangqi](https://en.wikipedia.org/wiki/Xiangqi)
-
-### Chess Variants
-
-- [Antichess](https://lichess.org/variant/antichess)
-- [Atomic](https://en.wikipedia.org/wiki/Atomic_chess)
-- [Chess960](https://en.wikipedia.org/wiki/Chess960)
-- [Crazyhouse](https://en.wikipedia.org/wiki/Crazyhouse)
-- [Horde](https://en.wikipedia.org/wiki/Dunsany%27s_Chess#Horde_Chess)
-- [King of the Hill](https://en.wikipedia.org/wiki/King_of_the_Hill_(chess))
-- [Racing Kings](https://en.wikipedia.org/wiki/V._R._Parton#Racing_Kings)
-- [Three-check](https://en.wikipedia.org/wiki/Three-check_chess)
-
-## Build Instructions
+<img src="./media/screenshots/liground-0.0.1.png" alt="LiGround screenshot" title="LiGround screenshot." />
 
 ### Build Setup
 ``` bash
